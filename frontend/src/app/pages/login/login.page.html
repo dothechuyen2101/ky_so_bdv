@@ -1,0 +1,77 @@
+<div class="login-page">
+  <section class="login-brand">
+    <img class="brand-logo hero-logo" src="/sbv-logo.svg" alt="State Bank of Vietnam" />
+    <p class="eyebrow">State Bank of Vietnam · T24R Integration</p>
+    <h1>{{ t('Digital document operations, under control.') }}</h1>
+    <p class="login-copy">
+      {{
+        t(
+          'Search, verify, reconcile and deliver signed banking documents from one secure workspace.'
+        )
+      }}
+    </p>
+    <div class="feature-list">
+      <span><i>01</i> {{ t('Document integrity and audit trails') }}</span>
+      <span><i>02</i> {{ t('Role-based operational access') }}</span>
+      <span><i>03</i> {{ t('Outbox processing visibility') }}</span>
+    </div>
+  </section>
+  <section class="login-card">
+    <div class="login-preferences">
+      <button
+        class="theme-toggle"
+        type="button"
+        (click)="preferences.toggleTheme()"
+        [title]="t(preferences.darkMode() ? 'Light mode' : 'Dark mode')"
+      >
+        {{ preferences.darkMode() ? '☀' : '◐' }}
+        <span>{{ t(preferences.darkMode() ? 'Light mode' : 'Dark mode') }}</span>
+      </button>
+      <div class="language-switch" aria-label="Language">
+        <button
+          type="button"
+          [class.active]="preferences.language() === 'vi'"
+          (click)="setLanguage('vi')"
+        >
+          VI
+        </button>
+        <button
+          type="button"
+          [class.active]="preferences.language() === 'en'"
+          (click)="setLanguage('en')"
+        >
+          EN
+        </button>
+      </div>
+    </div>
+    <div>
+      <p class="eyebrow dark">{{ t('Secure access') }}</p>
+      <h2>{{ t('Sign in to T24R') }}</h2>
+      <p class="muted">{{ t('Use your assigned operations account.') }}</p>
+    </div>
+    <label>
+      {{ t('Username') }}
+      <input [(ngModel)]="username" autocomplete="username" [placeholder]="t('Enter username')" />
+    </label>
+    <label>
+      {{ t('Password') }}
+      <input
+        [(ngModel)]="password"
+        type="password"
+        autocomplete="current-password"
+        [placeholder]="t('Enter password')"
+        (keyup.enter)="login()"
+      />
+    </label>
+    <p *ngIf="errorMessage()" class="form-error">{{ errorMessage() }}</p>
+    <button
+      class="primary wide"
+      type="button"
+      (click)="login()"
+      [disabled]="!username || !password || submitting()"
+    >
+      {{ t('Sign in') }}
+    </button>
+    <small>{{ t('Protected by role-based access control') }}</small>
+  </section>
+</div>

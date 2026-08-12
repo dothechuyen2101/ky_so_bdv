@@ -1,0 +1,104 @@
+@if (error()) {
+  <div class="notice error">
+    <span>!</span>{{ error() }}<button (click)="error.set('')">×</button>
+  </div>
+}
+
+<section class="page-intro">
+  <div>
+    <h2>{{ t('Users & permissions') }}</h2>
+    <p>{{ t('Control access to administrative and document functions.') }}</p>
+  </div>
+  <span class="result-count">{{ users().length }} {{ t('accounts') }}</span>
+</section>
+<section class="user-grid">
+  <article class="panel create-user">
+    <div class="panel-header">
+      <div>
+        <h2>{{ t('Create account') }}</h2>
+        <p>{{ t('Passwords require at least 8 characters') }}</p>
+      </div>
+    </div>
+    <div class="form-stack">
+      <label>
+        {{ t('Username') }}
+        <input [(ngModel)]="userForm.username" placeholder="e.g. operations.user" />
+      </label>
+      <label>
+        {{ t('Display name') }}
+        <input [(ngModel)]="userForm.displayName" [placeholder]="t('Full name')" />
+      </label>
+      <label>
+        {{ t('Temporary password') }}
+        <input [(ngModel)]="userForm.password" type="password" />
+      </label>
+      <label>
+        {{ t('Access role') }}
+        <select [(ngModel)]="userForm.role">
+          <option value="MAKER">{{ t('Maker') }}</option>
+          <option value="CHECKER">{{ t('Checker') }}</option>
+          <option value="USER">{{ t('Document user') }}</option>
+          <option value="ADMIN">{{ t('Administrator') }}</option>
+        </select>
+      </label>
+      <button
+        class="primary"
+        type="button"
+        (click)="createUser()"
+        [disabled]="!userForm.username || !userForm.displayName || userForm.password.length < 8"
+      >
+        {{ t('Create account') }}
+      </button>
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>{{ t('Current accounts') }}</h2>
+        <p>{{ t('Manage access status') }}</p>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ t('User') }}</th>
+            <th>{{ t('Role') }}</th>
+            <th>{{ t('Status') }}</th>
+            <th>{{ t('Created') }}</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (user of users(); track user.id) {
+            <tr>
+              <td>
+                <div class="person">
+                  <span class="avatar">{{ user.username.slice(0, 1).toUpperCase() }}</span>
+                  <div>
+                    <strong>{{ user.displayName }}</strong
+                    ><small>{{ user.username }}</small>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <span class="role-tag">{{ user.role }}</span>
+              </td>
+              <td>
+                <span class="status" [class.failed]="!user.active">
+                  {{ t(user.active ? 'ACTIVE' : 'DISABLED') }}
+                </span>
+              </td>
+              <td>{{ user.createdAt | date: 'mediumDate' }}</td>
+              <td>
+                <button type="button" (click)="toggleUser(user)">
+                  {{ t(user.active ? 'Disable' : 'Enable') }}
+                </button>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+</section>

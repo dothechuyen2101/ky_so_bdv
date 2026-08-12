@@ -1,0 +1,214 @@
+@if (error()) {
+  <div class="notice error">
+    <span>!</span>{{ error() }}<button (click)="error.set('')">×</button>
+  </div>
+}
+
+<section class="page-intro">
+  <div>
+    <h2>{{ t('Search signed documents') }}</h2>
+    <p>{{ t('Find records by transaction, customer, type, branch or status.') }}</p>
+  </div>
+  <span class="result-count">{{ documents().length }} {{ t('results') }}</span>
+</section>
+<section class="filter-card">
+  <div class="filter-grid">
+    <label>
+      {{ t('Document code') }}
+      <input
+        [(ngModel)]="filters.documentCode"
+        [placeholder]="t('Contains document code')"
+        (keyup.enter)="search()"
+      />
+    </label>
+    <label>
+      {{ t('Transaction ID') }}
+      <input
+        [(ngModel)]="filters.transactionId"
+        [placeholder]="t('Contains transaction ID')"
+        (keyup.enter)="search()"
+      />
+    </label>
+    <label>
+      {{ t('Customer ID') }}
+      <input
+        [(ngModel)]="filters.customerId"
+        [placeholder]="t('Contains customer ID')"
+        (keyup.enter)="search()"
+      />
+    </label>
+    <label>
+      {{ t('Branch') }}
+      <input
+        [(ngModel)]="filters.branchCode"
+        [placeholder]="t('Contains branch')"
+        (keyup.enter)="search()"
+      />
+    </label>
+    <label>
+      {{ t('Document type') }}
+      <input
+        [(ngModel)]="filters.documentType"
+        [placeholder]="t('Contains document type')"
+        (keyup.enter)="search()"
+      />
+    </label>
+    <label>
+      {{ t('Status') }}
+      <select [(ngModel)]="filters.status">
+        @for (status of statuses; track status) {
+          <option [ngValue]="status">{{ status || t('All statuses') }}</option>
+        }
+      </select>
+    </label>
+    <label>
+      {{ t('Reconciliation') }}
+      <select [(ngModel)]="filters.reconciliationStatus">
+        @for (status of reconciliationStatuses; track status) {
+          <option [ngValue]="status">{{ status || t('All results') }}</option>
+        }
+      </select>
+    </label>
+  </div>
+  <div class="filter-actions">
+    <button type="button" (click)="search()" class="primary" [disabled]="loading()">
+      {{ t(loading() ? 'Searching…' : 'Search documents') }}
+    </button>
+  </div>
+</section>
+<section class="document-layout">
+  <article class="panel records-panel">
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ t('Document') }}</th>
+            <th>{{ t('Customer') }}</th>
+            <th>{{ t('Type / branch') }}</th>
+            <th>{{ t('Status') }}</th>
+            <th>{{ t('Reconciliation') }}</th>
+            <th>{{ t('Actions') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of documents(); track item.id) {
+            <tr [class.selected]="selectedDetail()?.metadata?.id === item.id">
+              <td>
+                <button class="text-link" type="button" (click)="selectDocument(item)">
+                  {{ item.documentCode }}</button
+                ><small>{{ item.transactionId }}</small>
+              </td>
+              <td>
+                <strong>{{ item.customerId }}</strong
+                ><small>{{ item.accountNoMasked }}</small>
+              </td>
+              <td>
+                <strong>{{ item.documentType }}</strong
+                ><small>{{ item.branchCode }} · {{ item.businessType }}</small>
+              </td>
+              <td>
+                <span class="status" [class.failed]="item.status === 'FAILED'">{{
+                  item.status
+                }}</span>
+              </td>
+              <td>
+                <span class="status" [ngClass]="statusClass(item.reconciliationStatus)">
+                  {{ item.reconciliationStatus }}
+                </span>
+              </td>
+              <td class="actions">
+                <button type="button" title="Compare A" (click)="setCompare('left', item)">
+                  A
+                </button>
+                <button type="button" title="Compare B" (click)="setCompare('right', item)">
+                  B
+                </button>
+                @if (session.isAdmin()) {
+                  <button type="button" (click)="reconcile(item)">{{ t('Verify') }}</button>
+                }
+                <button class="download" type="button" (click)="download(item, 'PDF')">PDF</button>
+              </td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="6" class="empty">{{ t('No documents match the current filters.') }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </article>
+  <aside class="panel details">
+    <div class="panel-header">
+      <div>
+        <h2>{{ t('Document details') }}</h2>
+        <p>{{ t('Signing metadata') }}</p>
+      </div>
+    </div>
+    @if (selectedDetail(); as detail) {
+      <dl>
+        <dt>{{ t('Document') }}</dt>
+        <dd>{{ detail.metadata.documentCode }}</dd>
+        <dt>{{ t('Signed at') }}</dt>
+        <dd>{{ detail.metadata.signedAt | date: 'medium' }}</dd>
+        <dt>{{ t('Signer') }}</dt>
+        <dd>{{ detail.metadata.signerSubject }}</dd>
+        <dt>{{ t('Certificate') }}</dt>
+        <dd>{{ detail.metadata.certificateSerial }}</dd>
+        <dt>{{ t('Signed file') }}</dt>
+        <dd>{{ detail.signedFilePath }}</dd>
+      </dl>
+      <div class="download-row">
+        @for (format of formats; track format) {
+          <button type="button" (click)="download(detail.metadata, format)">{{ format }}</button>
+        }
+      </div>
+    } @else {
+      <div class="empty-state">
+        <b>⌕</b>
+        <p>{{ t('Select a document to inspect its signing metadata.') }}</p>
+      </div>
+    }
+  </aside>
+</section>
+<section class="panel compare-panel">
+  <div class="panel-header">
+    <div>
+      <h2>{{ t('Snapshot comparison') }}</h2>
+      <p>
+        A: {{ selectedLeftId || t('Not selected') }} · B:
+        {{ selectedRightId || t('Not selected') }}
+      </p>
+    </div>
+  </div>
+  @if (compareResult(); as comparison) {
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ t('Data path') }}</th>
+            <th>{{ t('Snapshot A') }}</th>
+            <th>{{ t('Snapshot B') }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (diff of comparison.differences; track diff.path) {
+            <tr>
+              <td>
+                <code>{{ diff.path }}</code>
+              </td>
+              <td>{{ diff.leftValue }}</td>
+              <td>{{ diff.rightValue }}</td>
+            </tr>
+          } @empty {
+            <tr>
+              <td colspan="3" class="empty">{{ t('Snapshots are identical.') }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  } @else {
+    <p class="empty">{{ t('Choose A and B on two document rows to compare their snapshots.') }}</p>
+  }
+</section>

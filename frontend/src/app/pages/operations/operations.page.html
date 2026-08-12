@@ -1,0 +1,108 @@
+@if (error()) {
+  <div class="notice error">
+    <span>!</span>{{ error() }}<button (click)="error.set('')">×</button>
+  </div>
+}
+
+<section class="page-intro">
+  <div>
+    <h2>{{ t('Outbox processing') }}</h2>
+    <p>{{ t('Run signing jobs and monitor event delivery.') }}</p>
+  </div>
+  <button type="button" (click)="loadSummary()">{{ t('Refresh') }}</button>
+</section>
+@if (session.isMaker() || session.isAdmin()) {
+  <section class="operation-card">
+    <div>
+      <p class="eyebrow dark">{{ t('Maker workflow') }}</p>
+      <h2>{{ t('Submit documents for approval') }}</h2>
+      <p>{{ t('Generate source data and submit documents to the checker queue.') }}</p>
+    </div>
+    <label> {{ t('Business date') }}<input type="date" [(ngModel)]="outboxBusinessDate" /> </label>
+    <label>
+      {{ t('Record limit') }}
+      <input type="number" min="1" max="1000" [(ngModel)]="outboxLimit" />
+    </label>
+    <button class="primary" type="button" (click)="submitForApproval()" [disabled]="loading()">
+      {{ t('Submit for approval') }}
+    </button>
+  </section>
+}
+@if (session.isChecker() || session.isAdmin()) {
+  <section class="operation-card">
+    <div>
+      <p class="eyebrow dark">{{ t('Checker workflow') }}</p>
+      <h2>{{ t('Approve and sign documents') }}</h2>
+      <p>{{ t('Process submitted documents and apply their digital signatures.') }}</p>
+    </div>
+    <label> {{ t('Business date') }}<input type="date" [(ngModel)]="outboxBusinessDate" /> </label>
+    <label>
+      {{ t('Record limit') }}
+      <input type="number" min="1" max="1000" [(ngModel)]="outboxLimit" />
+    </label>
+    <button class="primary" type="button" (click)="runOutbox()" [disabled]="loading()">
+      {{ t('Approve and sign') }}
+    </button>
+  </section>
+}
+@if (lastSubmission(); as submission) {
+  <div class="notice success">
+    {{ submission.submitted }} documents submitted for checker approval.
+  </div>
+}
+@if (lastRun(); as run) {
+  <div class="notice success">
+    Processed {{ run.processed }} events: {{ run.succeeded }} succeeded and {{ run.failed }} failed.
+  </div>
+}
+<section class="metrics compact-metrics">
+  <article class="metric">
+    <span>{{ t('Total events') }}</span
+    ><strong>{{ outboxSummary()?.totalEvents ?? 0 }}</strong>
+  </article>
+  @for (item of outboxSummary()?.byStatus | keyvalue; track item.key) {
+    <article class="metric">
+      <span>{{ item.key }}</span
+      ><strong>{{ item.value }}</strong>
+    </article>
+  }
+</section>
+<section class="panel">
+  <div class="panel-header">
+    <div>
+      <h2>{{ t('Recent events') }}</h2>
+      <p>{{ t('Latest outbox delivery attempts') }}</p>
+    </div>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Event') }}</th>
+          <th>{{ t('Transaction') }}</th>
+          <th>{{ t('Status') }}</th>
+          <th>{{ t('Retries') }}</th>
+          <th>{{ t('Created') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (event of outboxSummary()?.recentEvents; track event.id) {
+          <tr>
+            <td>
+              <strong>{{ event.eventType }}</strong
+              ><small>{{ event.eventId }}</small>
+            </td>
+            <td>{{ event.transactionId }}</td>
+            <td>
+              <span class="status" [class.failed]="event.status === 'FAILED'">{{
+                event.status
+              }}</span>
+            </td>
+            <td>{{ event.retryCount }}</td>
+            <td>{{ event.createdAt | date: 'medium' }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>

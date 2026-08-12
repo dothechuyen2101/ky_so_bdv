@@ -1,0 +1,77 @@
+@if (error()) {
+  <div class="notice error">
+    <span>!</span>{{ error() }}<button (click)="error.set('')">×</button>
+  </div>
+}
+
+<section class="page-intro">
+  <div>
+    <h2>{{ t('System at a glance') }}</h2>
+    <p>{{ t('Current document pipeline and reconciliation health.') }}</p>
+  </div>
+  <button type="button" (click)="refresh()">{{ t('Refresh data') }}</button>
+</section>
+<section class="metrics">
+  <article class="metric">
+    <span>{{ t('Total documents') }}</span
+    ><strong>{{ summary()?.totalRecords ?? 0 }}</strong
+    ><small>{{ t('Across all branches') }}</small>
+  </article>
+  <article class="metric success">
+    <span>{{ t('Successfully signed') }}</span
+    ><strong>{{ summary()?.signedRecords ?? 0 }}</strong
+    ><small>{{ t('Ready for delivery') }}</small>
+  </article>
+  <article class="metric danger">
+    <span>{{ t('Failed documents') }}</span
+    ><strong>{{ summary()?.failedRecords ?? 0 }}</strong
+    ><small>{{ t('Require attention') }}</small>
+  </article>
+  <article class="metric warning">
+    <span>{{ t('Reconciliation issues') }}</span
+    ><strong>{{ summary()?.reconciliationIssues ?? 0 }}</strong
+    ><small>{{ t('Integrity exceptions') }}</small>
+  </article>
+</section>
+<section class="dashboard-grid">
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>{{ t('Documents by branch') }}</h2>
+        <p>{{ t('Current distribution') }}</p>
+      </div>
+    </div>
+    <div class="bars">
+      @for (branch of branchEntries(); track branch[0]) {
+        <div class="bar-row">
+          <strong>{{ branch[0] }}</strong>
+          <div class="bar"><i [style.width.%]="branchPercent(branch[1])"></i></div>
+          <span>{{ branch[1] }}</span>
+        </div>
+      } @empty {
+        <p class="empty">{{ t('No branch data available.') }}</p>
+      }
+    </div>
+  </article>
+  <article class="panel">
+    <div class="panel-header">
+      <div>
+        <h2>{{ t('Recent outbox activity') }}</h2>
+        <p>{{ outboxSummary()?.totalEvents ?? 0 }} {{ t('total events') }}</p>
+      </div>
+      <button type="button" routerLink="/operations">{{ t('View all') }}</button>
+    </div>
+    <ol class="activity-list">
+      @for (event of (outboxSummary()?.recentEvents ?? []).slice(0, 5); track event.id) {
+        <li>
+          <span class="event-dot" [class.bad]="event.status === 'FAILED'"></span>
+          <div>
+            <strong>{{ event.eventType }}</strong
+            ><small>{{ event.transactionId }}</small>
+          </div>
+          <time>{{ event.createdAt | date: 'shortTime' }}</time>
+        </li>
+      }
+    </ol>
+  </article>
+</section>

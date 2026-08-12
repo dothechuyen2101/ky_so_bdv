@@ -1,0 +1,23 @@
+services:
+  backend:
+    build:
+      context: ./backend
+    ports:
+      - "8080:8080"
+    environment:
+      APP_SECURITY_ADMIN_USERNAME: admin
+      APP_SECURITY_ADMIN_PASSWORD: admin123
+      APP_SECURITY_DEFAULT_API_KEY: dev-api-key-t24r
+      APP_STORAGE_ROOT_PATH: /data/digital-signing
+      SPRING_DATASOURCE_URL: jdbc:h2:file:/data/database/t24r_signing;MODE=Oracle;DATABASE_TO_UPPER=false
+    volumes:
+      - ./data/digital-signing:/data/digital-signing
+      - ./backend/data/database:/data/database
+
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "4200:80"
+    depends_on:
+      - backend

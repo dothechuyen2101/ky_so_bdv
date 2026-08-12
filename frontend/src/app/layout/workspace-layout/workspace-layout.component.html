@@ -1,0 +1,78 @@
+<div class="workspace">
+  <aside class="sidebar">
+    <div class="logo-row">
+      <img class="brand-logo sidebar-logo" src="/sbv-logo.svg" alt="State Bank of Vietnam" />
+      <div>
+        <strong>T24R</strong><span>{{ t('Signing operations') }}</span>
+      </div>
+    </div>
+    <nav aria-label="Main navigation">
+      <p>{{ t('Workspace') }}</p>
+      @if (session.isAdmin()) {
+        <a routerLink="/overview" routerLinkActive="active"><b>⌂</b>{{ t('Overview') }}</a>
+      }
+      <a routerLink="/documents" routerLinkActive="active"><b>⌕</b>{{ t('Documents') }}</a>
+      @if (session.canOperate()) {
+        <a routerLink="/operations" routerLinkActive="active"><b>↻</b>{{ t('Operations') }}</a>
+      }
+      @if (session.isAdmin()) {
+        <p>{{ t('Administration') }}</p>
+        <a routerLink="/audit" routerLinkActive="active"><b>≡</b>{{ t('Audit log') }}</a>
+        <a routerLink="/users" routerLinkActive="active"><b>♙</b>{{ t('Users & access') }}</a>
+      }
+    </nav>
+    <div class="sidebar-foot">
+      <span class="health-dot"></span>
+      <div>
+        <strong>{{ t('API connected') }}</strong
+        ><small>localhost:8080</small>
+      </div>
+    </div>
+  </aside>
+
+  <div class="main-shell">
+    <header class="topbar">
+      <div>
+        <p class="breadcrumb">T24R / {{ activeView() }}</p>
+        <h1>{{ viewTitle() }}</h1>
+      </div>
+      <div class="user-menu">
+        <button
+          class="theme-toggle icon-only"
+          type="button"
+          (click)="preferences.toggleTheme()"
+          [title]="t(preferences.darkMode() ? 'Light mode' : 'Dark mode')"
+          [attr.aria-label]="t(preferences.darkMode() ? 'Light mode' : 'Dark mode')"
+        >
+          {{ preferences.darkMode() ? '☀' : '◐' }}
+        </button>
+        <div class="language-switch compact-language" aria-label="Language">
+          <button
+            type="button"
+            [class.active]="preferences.language() === 'vi'"
+            (click)="setLanguage('vi')"
+          >
+            VI
+          </button>
+          <button
+            type="button"
+            [class.active]="preferences.language() === 'en'"
+            (click)="setLanguage('en')"
+          >
+            EN
+          </button>
+        </div>
+        <span class="avatar">{{ session.user()?.username?.slice(0, 1)?.toUpperCase() }}</span>
+        <div>
+          <strong>{{ session.user()?.username }}</strong>
+          <small>{{ t(session.roleLabel()) }}</small>
+        </div>
+        <button type="button" (click)="logout()">{{ t('Sign out') }}</button>
+      </div>
+    </header>
+
+    <main>
+      <router-outlet />
+    </main>
+  </div>
+</div>

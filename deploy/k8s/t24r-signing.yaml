@@ -1,0 +1,107 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: t24r-signing-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: t24r-signing-backend
+  template:
+    metadata:
+      labels:
+        app: t24r-signing-backend
+    spec:
+      containers:
+        - name: backend
+          image: t24r-signing-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: SPRING_PROFILES_ACTIVE
+              value: oracle
+            - name: APP_STORAGE_ROOT_PATH
+              value: /data/digital-signing
+            - name: ORACLE_JDBC_URL
+              valueFrom:
+                secretKeyRef:
+                  name: t24r-oracle
+                  key: jdbc-url
+            - name: ORACLE_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: t24r-oracle
+                  key: username
+            - name: ORACLE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: t24r-oracle
+                  key: password
+          readinessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8080
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          volumeMounts:
+            - name: digital-signing-storage
+              mountPath: /data/digital-signing
+      volumes:
+        - name: digital-signing-storage
+          persistentVolumeClaim:
+            claimName: digital-signing-storage
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: t24r-signing-backend
+spec:
+  selector:
+    app: t24r-signing-backend
+  ports:
+    - port: 8080
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: t24r-signing-frontend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: t24r-signing-frontend
+  template:
+    metadata:
+      labels:
+        app: t24r-signing-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: t24r-signing-frontend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: t24r-signing-frontend
+spec:
+  selector:
+    app: t24r-signing-frontend
+  ports:
+    - port: 80
+      targetPort: 80
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: digital-signing-storage
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi

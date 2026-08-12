@@ -1,0 +1,47 @@
+@if (error()) {
+  <div class="notice error">
+    <span>!</span>{{ error() }}<button (click)="error.set('')">×</button>
+  </div>
+}
+
+<section class="page-intro">
+  <div>
+    <h2>{{ t('Audit activity') }}</h2>
+    <p>{{ t('Review security, downloads and operational actions.') }}</p>
+  </div>
+  <button type="button" (click)="loadAudit()">{{ t('Refresh') }}</button>
+</section>
+<section class="panel">
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>{{ t('Time') }}</th>
+          <th>{{ t('Action') }}</th>
+          <th>{{ t('Actor') }}</th>
+          <th>{{ t('Target') }}</th>
+          <th>{{ t('Description') }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (log of auditLogs(); track log.id) {
+          <tr>
+            <td>{{ log.createdAt | date: 'medium' }}</td>
+            <td>
+              <span class="action-tag">{{ log.action }}</span>
+            </td>
+            <td>{{ log.actor }}</td>
+            <td>
+              {{ log.targetType }}<small>{{ log.targetId }}</small>
+            </td>
+            <td>{{ log.message }}</td>
+          </tr>
+        } @empty {
+          <tr>
+            <td colspan="5" class="empty">{{ t('No audit entries found.') }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
